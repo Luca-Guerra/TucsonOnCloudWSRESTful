@@ -14,5 +14,7 @@
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
 	<classpathentry kind="lib" path="C:/Users/Luca/Desktop/Università/Magistrale/InCorso/SistemiDistribuiti/TuCSoN/tucson.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Luca/Desktop/Università/Magistrale/InCorso/SistemiDistribuiti/TuProlog/bin/2p.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Luca/Desktop/Università/Magistrale/InCorso/SistemiDistribuiti/TuProlog/bin/tuprolog.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

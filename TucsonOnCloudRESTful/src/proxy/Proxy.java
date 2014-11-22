@@ -20,9 +20,11 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 import alice.logictuple.LogicTuple;
 import alice.logictuple.Value;
+import alice.logictuple.exceptions.InvalidLogicTupleException;
 import alice.tucson.api.SynchACC;
 import alice.tucson.api.TucsonAgentId;
 import alice.tucson.api.TucsonMetaACC;
@@ -79,9 +81,16 @@ public class Proxy extends HttpServlet {
          *  after the operation is successfully executed, Tuple is returned as a completion
          */
 	        case "out":
-	            System.out.println("Inserisco la tupla" + "tupla con valore:" + "valore");
+	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
+	            System.out.println("Inserisco la tupla" + tuple_node.getAttribute("val"));
 	            initNodeAccessLayer(session);
-	            LogicTuple tuple = new LogicTuple("hello", new Value("world"));
+				LogicTuple tuple;
+				try {
+					tuple = LogicTuple.parse(tuple_node.getAttribute("val"));
+				} catch (InvalidLogicTupleException e) {
+					answer.appendChild(answer.createElement("problem"));
+					return answer;
+				}
 	            NAL.out("default", tuple);
 	            answer.appendChild(answer.createElement("ok"));
 	            break;
@@ -126,7 +135,6 @@ public class Proxy extends HttpServlet {
  	 	 * succeeds anyway
     	 */ 
             case "get":
-                //
                 break;
         /*
          * Overwrites the target tuple spaces with the list of
@@ -134,7 +142,6 @@ public class Proxy extends HttpServlet {
      	 * Tuples is successfully returned
          */
             case "set":
-                //
                 break;
         }
         return answer;

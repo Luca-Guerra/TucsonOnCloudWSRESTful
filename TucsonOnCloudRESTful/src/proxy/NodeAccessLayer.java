@@ -37,10 +37,12 @@ public class NodeAccessLayer {
 		}
 	 }
 	 
-	 public LogicTuple out(String tuple_centre_name, LogicTuple tuple){
+	 public LogicTuple out(String tuple_centre_name, LogicTuple tuple) {
+		// Ottengo il tuple centre ID 
 		TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
 	 	ITucsonOperation op;
 		try {
+			// Realizzo l'operazione out
 			op = acc.out(tid, tuple, null);
 		} catch (TucsonOperationNotPossibleException | 
 				 UnreachableNodeException | 
@@ -48,5 +50,20 @@ public class NodeAccessLayer {
 			return null;
 		}
 		return op.getLogicTupleResult();
+	 }
+	 
+	 public LogicTuple rdp(String tuple_centre_name, LogicTuple tuple) {
+		// Ottengo il tuple centre ID 
+			TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
+		 	ITucsonOperation op;
+			try {
+				// Realizzo l'operazione out
+				op = acc.rdp(tid, tuple, null);
+			} catch (TucsonOperationNotPossibleException | 
+					 UnreachableNodeException | 
+					 OperationTimeOutException e) {
+				return null;
+			}
+			return op.getLogicTupleResult();
 	 }
 }
