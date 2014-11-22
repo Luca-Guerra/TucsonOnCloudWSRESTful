@@ -32,14 +32,11 @@ public class Proxy extends HttpServlet {
 	private static final long serialVersionUID = 1L;
     private static DocumentBuilder builder = null;
     private static RegistryAccessLayer RAL = null;
-    private TucsonAgentId aid = null;
-	private SynchACC acc = TucsonMetaACC.getContext(aid);
     
     public Proxy() throws ParserConfigurationException, TucsonInvalidAgentIdException {
         super();
         builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         RAL = new RegistryAccessLayer();
-        aid = new TucsonAgentId("CloudAgent");
     }
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -60,21 +57,73 @@ public class Proxy extends HttpServlet {
         }
 	}
 	
-	 private Document operations(Document data, HttpSession session) throws ParserConfigurationException {
-	        
+	 private Document operations(Document data, HttpSession session) throws ParserConfigurationException {  
 		// Il nome del tag radice determina l'operazione da eseguire 
 	 	Element root = data.getDocumentElement();
         String operation = root.getTagName();
         Document answer = builder.newDocument();
         switch (operation) {
-            case "op1":
-                System.out.println("Eseguo l'operazione prova");
+        /*
+         *  Writes Tuple in the target tuple space; 
+         *  after the operation is successfully executed, Tuple is returned as a completion
+         */
+            case "out":
+            	
+                System.out.println("Inserisco la tupla" + "tupla con valore:" + "valore");
+                
                 answer.appendChild(answer.createElement("ok"));
                 break;
-            case "op2":
+        /*
+         * Looks for a tuple matching TupleTemplate in the target tuple space;
+         * if a matching Tuple is found when the operation is served, the
+     	 * execution succeeds by returning Tuple; otherwise, the execution is
+ 		 * suspended to be resumed and successfully completed when a matching
+	 	 * Tuple will be finally found in and returned from the target tuple space
+         */
+            case "rd":
+                break;
+         /*
+          * Predicative (non-suspensive) version of rd(TupleTemplate); 
+          * if a matching Tuple is not found, the execution fails
+      	  * (operation outcome is FAILURE) and TupleTemplate is returned;
+          */
+            case "rdp":
+            	break;
+        /*
+         * Looks for a tuple matching TupleTemplate in the target tuple
+     	 * space; if a matching Tuple is found when the operation is served, the
+ 		 * execution succeeds by removing and returning Tuple; 
+ 		 * otherwise, the execution is suspended to be resumed and successfully completed when
+ 		 * a matching Tuple will be finally found in, removed and returned from
+ 		 * the target tuple space
+         */  
+            case "in":
+                break;
+        /*
+         * Predicative (non-suspensive) version of in(TupleTemplate); 
+         * if a matching Tuple is not found, the execution fails
+ 	     * no tuple is removed from the target tuple space and
+     	 * TupleTemplate is returned;
+         */         
+            case "inp":
+            	break;
+    	/*
+    	 * Reads all the Tuples in the target tuple space and returns
+	 	 * them as a list; if no tuple occurs in the target tuple space at
+ 	 	 * execution time, the empty list is returned and the execution
+ 	 	 * succeeds anyway
+    	 */ 
+            case "get":
                 //
                 break;
-            // case ....
+        /*
+         * Overwrites the target tuple spaces with the list of
+     	 * Tuples; when the execution is completed, the list of
+     	 * Tuples is successfully returned
+         */
+            case "set":
+                //
+                break;
         }
         return answer;
 	    }
