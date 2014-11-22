@@ -2,12 +2,17 @@ package proxy;
 
 import models.User;
 import base.RegistryAccessLayer;
+import alice.logictuple.LogicTuple;
+import alice.tucson.api.ITucsonOperation;
 import alice.tucson.api.SynchACC;
 import alice.tucson.api.TucsonAgentId;
 import alice.tucson.api.TucsonMetaACC;
 import alice.tucson.api.TucsonTupleCentreId;
 import alice.tucson.api.exceptions.TucsonInvalidAgentIdException;
 import alice.tucson.api.exceptions.TucsonInvalidTupleCentreIdException;
+import alice.tucson.api.exceptions.TucsonOperationNotPossibleException;
+import alice.tucson.api.exceptions.UnreachableNodeException;
+import alice.tuplecentre.api.exceptions.OperationTimeOutException;
 
 public class NodeAccessLayer {
 	 private TucsonAgentId aid = null;
@@ -24,12 +29,24 @@ public class NodeAccessLayer {
 		 user = RAL.AuthUser(username, password);
 	 }
 	 
-	 public TucsonTupleCentreId GetTupleCenter(String tuple_center_name) {
+	 public TucsonTupleCentreId GetTupleCenter(String tuple_centre_name) {
 		 try {
-			return new TucsonTupleCentreId(tuple_center_name, NODE_IP, user.Nport);
+			return new TucsonTupleCentreId(tuple_centre_name, NODE_IP, user.Nport);
 		} catch (TucsonInvalidTupleCentreIdException e) {
 			return null;
 		}
 	 }
 	 
+	 public LogicTuple out(String tuple_centre_name, LogicTuple tuple){
+		TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
+	 	ITucsonOperation op;
+		try {
+			op = acc.out(tid, tuple, null);
+		} catch (TucsonOperationNotPossibleException | 
+				 UnreachableNodeException | 
+				 OperationTimeOutException e) {
+			return null;
+		}
+		return op.getLogicTupleResult();
+	 }
 }
