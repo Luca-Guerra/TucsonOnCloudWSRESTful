@@ -21,6 +21,8 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import alice.logictuple.LogicTuple;
+import alice.logictuple.Value;
 import alice.tucson.api.SynchACC;
 import alice.tucson.api.TucsonAgentId;
 import alice.tucson.api.TucsonMetaACC;
@@ -32,6 +34,7 @@ public class Proxy extends HttpServlet {
 	private static final long serialVersionUID = 1L;
     private static DocumentBuilder builder = null;
     private static RegistryAccessLayer RAL = null;
+    private static NodeAccessLayer NAL = null;
     
     public Proxy() throws ParserConfigurationException, TucsonInvalidAgentIdException {
         super();
@@ -62,17 +65,26 @@ public class Proxy extends HttpServlet {
 	 	Element root = data.getDocumentElement();
         String operation = root.getTagName();
         Document answer = builder.newDocument();
+        
         switch (operation) {
+        
+        	case "log-in":
+        		String username = root.getElementsByTagName("username").item(0).getTextContent();
+        		String password = root.getElementsByTagName("password").item(0).getTextContent();
+        		session.setAttribute("username", username);
+        		session.setAttribute("password", password);
+        		break;
         /*
          *  Writes Tuple in the target tuple space; 
          *  after the operation is successfully executed, Tuple is returned as a completion
          */
-            case "out":
-            	
-                System.out.println("Inserisco la tupla" + "tupla con valore:" + "valore");
-                
-                answer.appendChild(answer.createElement("ok"));
-                break;
+	        case "out":
+	            System.out.println("Inserisco la tupla" + "tupla con valore:" + "valore");
+	            initNodeAccessLayer(session);
+	            LogicTuple tuple = new LogicTuple("hello", new Value("world"));
+	            NAL.out("default", tuple);
+	            answer.appendChild(answer.createElement("ok"));
+	            break;
         /*
          * Looks for a tuple matching TupleTemplate in the target tuple space;
          * if a matching Tuple is found when the operation is served, the
@@ -126,5 +138,15 @@ public class Proxy extends HttpServlet {
                 break;
         }
         return answer;
-	    }
+    }
+	 
+	 private void initNodeAccessLayer(HttpSession session) {
+		 try {
+			 String username = session.getAttribute("username").toString();
+			 String password = session.getAttribute("password").toString();
+				NAL = new NodeAccessLayer(username, password);
+		 } catch (TucsonInvalidAgentIdException e) {
+			
+		 }
+	 }
 }

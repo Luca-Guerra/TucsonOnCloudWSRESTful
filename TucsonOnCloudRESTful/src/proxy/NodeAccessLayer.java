@@ -21,7 +21,7 @@ public class NodeAccessLayer {
 	 private final String NODE_IP = "127.0.0.1";
 	 private User user = null;
 	 
-	 public NodeAccessLayer(String username, String password) throws TucsonInvalidAgentIdException{
+	 public NodeAccessLayer(String username, String password) throws TucsonInvalidAgentIdException {
 		 RAL = new RegistryAccessLayer();
 		 aid = new TucsonAgentId("CloudAgent");
 		 acc = TucsonMetaACC.getContext(aid);
