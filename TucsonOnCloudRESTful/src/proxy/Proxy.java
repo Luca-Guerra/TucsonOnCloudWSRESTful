@@ -21,14 +21,25 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import alice.tucson.api.SynchACC;
+import alice.tucson.api.TucsonAgentId;
+import alice.tucson.api.TucsonMetaACC;
+import alice.tucson.api.exceptions.TucsonInvalidAgentIdException;
+import base.RegistryAccessLayer;
+
 @WebServlet(description = "Esegue le primitive Tucson per i diversi client ai giusti nodi.", urlPatterns = { "/Proxy" })
 public class Proxy extends HttpServlet {
 	private static final long serialVersionUID = 1L;
     private static DocumentBuilder builder = null;
+    private static RegistryAccessLayer RAL = null;
+    private TucsonAgentId aid = null;
+	private SynchACC acc = TucsonMetaACC.getContext(aid);
     
-    public Proxy() throws ParserConfigurationException {
+    public Proxy() throws ParserConfigurationException, TucsonInvalidAgentIdException {
         super();
         builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        RAL = new RegistryAccessLayer();
+        aid = new TucsonAgentId("CloudAgent");
     }
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -50,20 +61,21 @@ public class Proxy extends HttpServlet {
 	}
 	
 	 private Document operations(Document data, HttpSession session) throws ParserConfigurationException {
-	        //name of operation is message root
-	        Element root = data.getDocumentElement();
-	        String operation = root.getTagName();
-	        Document answer = builder.newDocument();
-	        switch (operation) {
-	            case "op1":
-	                System.out.println("Eseguo l'operazione prova");
-	                answer.appendChild(answer.createElement("ok"));
-	                break;
-	            case "op2":
-	                //
-	                break;
-	            // case ....
-	        }
-	        return answer;
+	        
+		// Il nome del tag radice determina l'operazione da eseguire 
+	 	Element root = data.getDocumentElement();
+        String operation = root.getTagName();
+        Document answer = builder.newDocument();
+        switch (operation) {
+            case "op1":
+                System.out.println("Eseguo l'operazione prova");
+                answer.appendChild(answer.createElement("ok"));
+                break;
+            case "op2":
+                //
+                break;
+            // case ....
+        }
+        return answer;
 	    }
 }
