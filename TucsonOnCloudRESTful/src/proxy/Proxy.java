@@ -14,84 +14,93 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
-import alice.logictuple.LogicTuple;
-import alice.logictuple.Value;
-import alice.logictuple.exceptions.InvalidLogicTupleException;
-import alice.tucson.api.SynchACC;
-import alice.tucson.api.TucsonAgentId;
-import alice.tucson.api.TucsonMetaACC;
-import alice.tucson.api.exceptions.TucsonInvalidAgentIdException;
 import base.RegistryAccessLayer;
+import alice.logictuple.LogicTuple;
+import alice.logictuple.exceptions.InvalidLogicTupleException;
+import alice.tucson.api.exceptions.TucsonInvalidAgentIdException;
 
-@WebServlet(description = "Esegue le primitive Tucson per i diversi client ai giusti nodi.", urlPatterns = { "/Proxy" })
+@WebServlet(description = "Proxy.", urlPatterns = { "/Proxy" })
 public class Proxy extends HttpServlet {
+	
 	private static final long serialVersionUID = 1L;
     private static DocumentBuilder builder = null;
-    private static RegistryAccessLayer RAL = null;
     private static NodeAccessLayer NAL = null;
-    
-    public Proxy() throws ParserConfigurationException, TucsonInvalidAgentIdException {
+    private static RegistryAccessLayer RAL = null;
+    public Proxy() throws ParserConfigurationException {
         super();
         builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        RAL = new RegistryAccessLayer();
     }
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		InputStream is = request.getInputStream();
-        HttpSession session = request.getSession();
-        response.setContentType("text/xml;charset=UTF-8");
-        OutputStream os = response.getOutputStream();
-        try {
-        	Document data = builder.parse(is);
-        	is.close();
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			InputStream is = request.getInputStream();
+			HttpSession session = request.getSession();
+	        response.setContentType("text/xml;charset=UTF-8");
+	        OutputStream os = response.getOutputStream();
+			Document data = builder.parse(is);
+			is.close();
         	Document answer = operations(data,session);
         	Transformer transformer = TransformerFactory.newInstance().newTransformer();
         	transformer.transform(new DOMSource(answer), new StreamResult(os));
         	os.close();
-        }
-        catch (Exception ex){ 
-            System.out.println(ex);
-        }
+		} catch (SAXException | ParserConfigurationException | TransformerException | IOException e) {
+			System.out.println(e);
+		}
 	}
 	
-	 private Document operations(Document data, HttpSession session) throws ParserConfigurationException {  
+    private Document operations(Document data, HttpSession session) throws ParserConfigurationException {  
 		// Il nome del tag radice determina l'operazione da eseguire 
 	 	Element root = data.getDocumentElement();
+	 	System.out.println("Documento ricevuto:");
+	 	StampDocument(data);
+	 	System.out.println();
         String operation = root.getTagName();
         Document answer = builder.newDocument();
         
         switch (operation) {
         
         	case "log-in":
+        		System.out.println(session.getId());
         		String username = root.getElementsByTagName("username").item(0).getTextContent();
         		String password = root.getElementsByTagName("password").item(0).getTextContent();
+        		RAL = new RegistryAccessLayer();
+        		if(RAL.AuthUser(username, password) == null){
+        			answer.appendChild(answer.createElement("log-in fails"));
+        			break;
+        		}
         		session.setAttribute("username", username);
-        		session.setAttribute("password", password);
+        		System.out.println("Utente: " + username + " loggato correttamente");
+        		answer.appendChild(answer.createElement("logged"));
         		break;
         /*
          *  Writes Tuple in the target tuple space; 
          *  after the operation is successfully executed, Tuple is returned as a completion
          */
 	        case "out":
+	        	System.out.println(session.getId());
+	        	System.out.println("user letto:" + (String) session.getAttribute("username"));
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
-	            System.out.println("Inserisco la tupla" + tuple_node.getAttribute("val"));
+	            System.out.println("Inserisco la tupla: " + tuple_node.getAttribute("value"));
 	            initNodeAccessLayer(session);
 				LogicTuple tuple;
 				try {
-					tuple = LogicTuple.parse(tuple_node.getAttribute("val"));
+					tuple = LogicTuple.parse(tuple_node.getAttribute("value"));
 				} catch (InvalidLogicTupleException e) {
 					answer.appendChild(answer.createElement("problem"));
 					return answer;
 				}
 	            NAL.out("default", tuple);
+	            System.out.println("tutpla inserita correttamente!:) ");
 	            answer.appendChild(answer.createElement("ok"));
 	            break;
         /*
@@ -147,13 +156,25 @@ public class Proxy extends HttpServlet {
         return answer;
     }
 	 
-	 private void initNodeAccessLayer(HttpSession session) {
+	private void initNodeAccessLayer(HttpSession session) {
 		 try {
+			 System.out.println("autenticazione in corso...");
 			 String username = session.getAttribute("username").toString();
-			 String password = session.getAttribute("password").toString();
-				NAL = new NodeAccessLayer(username, password);
+			 System.out.println("autenticato utente");
+			 NAL = new NodeAccessLayer(username);
 		 } catch (TucsonInvalidAgentIdException e) {
 			
 		 }
 	 }
+	
+	private void StampDocument(Document doc){
+		StreamResult result =  new StreamResult(System.out);
+        Transformer transformer;
+		try {
+			transformer = TransformerFactory.newInstance().newTransformer();
+			transformer.transform(new DOMSource(doc), result);
+		} catch (TransformerException | TransformerFactoryConfigurationError e) {
+			e.printStackTrace();
+		}
+	}
 }

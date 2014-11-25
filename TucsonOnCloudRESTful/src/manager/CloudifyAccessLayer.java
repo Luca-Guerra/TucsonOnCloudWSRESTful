@@ -32,7 +32,7 @@ public class CloudifyAccessLayer {
 			result = execCmd("connect " + cloudAddress + ";use-application TuCSoNCloud;set-instances Node " + c);
 		}
 	    if(result)
-	    	return "OK";
+	    	return "ok";
 	    return "Problems";	
 	}
  	

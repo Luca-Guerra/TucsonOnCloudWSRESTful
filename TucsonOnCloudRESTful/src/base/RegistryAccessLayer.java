@@ -74,15 +74,23 @@ public class RegistryAccessLayer {
 	  }
 	
 	public User AuthUser(String username, String password)
-		{
-			List<User> users = getUsers();
-			for(User user : users)
-				if(user.Username.equals(username) && user.Password.equals(password))
-					return user;
-			
-			return null;
-		}
+	{
+		List<User> users = getUsers();
+		for(User user : users)
+			if(user.Username.equals(username) && user.Password.equals(password))
+				return user;
+		
+		return null;
+	}
  
+	public User GetUser(String username){
+		List<User> users = getUsers();
+		for(User user : users)
+			if(user.Username.equals(username))
+				return user;
+		return null;
+	}
+	
 	public boolean AttachPort(String port){
 		// Ottengo il registro
 		Document doc = GetRegistry();

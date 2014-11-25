@@ -21,12 +21,12 @@ public class NodeAccessLayer {
 	 private final String NODE_IP = "127.0.0.1";
 	 private User user = null;
 	 
-	 public NodeAccessLayer(String username, String password) throws TucsonInvalidAgentIdException {
+	 public NodeAccessLayer(String username) throws TucsonInvalidAgentIdException {
 		 RAL = new RegistryAccessLayer();
 		 aid = new TucsonAgentId("CloudAgent");
 		 acc = TucsonMetaACC.getContext(aid);
 		 
-		 user = RAL.AuthUser(username, password);
+		 user = RAL.GetUser(username);
 	 }
 	 
 	 public TucsonTupleCentreId GetTupleCenter(String tuple_centre_name) {
