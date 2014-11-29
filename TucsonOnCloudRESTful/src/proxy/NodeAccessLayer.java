@@ -26,7 +26,6 @@ public class NodeAccessLayer {
 			 RAL = new RegistryAccessLayer();
 			 aid = new TucsonAgentId("agentOnCloud");
 			 acc = TucsonMetaACC.getContext(aid);
-			 
 			 user = RAL.GetUser(username);
 		 } catch(Exception e) {
 			 System.out.println(e);
@@ -61,7 +60,7 @@ public class NodeAccessLayer {
 			TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
 		 	ITucsonOperation op;
 			try {
-				// Realizzo l'operazione out
+				// Realizzo l'operazione rdp
 				op = acc.rdp(tid, tuple, null);
 			} catch (TucsonOperationNotPossibleException | 
 					 UnreachableNodeException | 
@@ -70,4 +69,50 @@ public class NodeAccessLayer {
 			}
 			return op.getLogicTupleResult();
 	 }
+	 
+	 public LogicTuple inp(String tuple_centre_name, LogicTuple tuple) {
+		// Ottengo il tuple centre ID 
+			TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
+		 	ITucsonOperation op;
+			try {
+				// Realizzo l'operazione inp
+				op = acc.inp(tid, tuple, null);
+			} catch (TucsonOperationNotPossibleException | 
+					 UnreachableNodeException | 
+					 OperationTimeOutException e) {
+				return null;
+			}
+			return op.getLogicTupleResult();
+	 }
+	 
+	 public LogicTuple in(String tuple_centre_name, LogicTuple tuple) {
+			// Ottengo il tuple centre ID 
+				TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
+			 	ITucsonOperation op;
+				try {
+					// Realizzo l'operazione in
+					op = acc.in(tid, tuple, null);
+				} catch (TucsonOperationNotPossibleException | 
+						 UnreachableNodeException | 
+						 OperationTimeOutException e) {
+					return null;
+				}
+				return op.getLogicTupleResult();
+	 }
+	 
+	 public LogicTuple rd(String tuple_centre_name, LogicTuple tuple) {
+			// Ottengo il tuple centre ID 
+				TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
+			 	ITucsonOperation op;
+				try {
+					// Realizzo l'operazione in
+					op = acc.rd(tid, tuple, null);
+				} catch (TucsonOperationNotPossibleException | 
+						 UnreachableNodeException | 
+						 OperationTimeOutException e) {
+					return null;
+				}
+				return op.getLogicTupleResult();
+	 }
+	 
 }
