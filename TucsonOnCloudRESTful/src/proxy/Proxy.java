@@ -100,7 +100,7 @@ public class Proxy extends HttpServlet {
 					return answer;
 				}
 	            NAL.out("default", tuple);
-	            System.out.println("tutpla inserita correttamente!:) ");
+	            System.out.println("tupla inserita correttamente!:) ");
 	            answer.appendChild(answer.createElement("ok"));
 	            break;
         /*
@@ -163,7 +163,7 @@ public class Proxy extends HttpServlet {
 			 System.out.println("autenticato utente");
 			 NAL = new NodeAccessLayer(username);
 		 } catch (TucsonInvalidAgentIdException e) {
-			
+			System.out.println(e);
 		 }
 	 }
 	

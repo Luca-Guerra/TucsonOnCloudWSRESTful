@@ -18,15 +18,19 @@ public class NodeAccessLayer {
 	 private TucsonAgentId aid = null;
 	 private SynchACC acc = null;
 	 private RegistryAccessLayer RAL = null;
-	 private final String NODE_IP = "127.0.0.1";
+	 private final String NODE_IP = "localhost";
 	 private User user = null;
 	 
 	 public NodeAccessLayer(String username) throws TucsonInvalidAgentIdException {
-		 RAL = new RegistryAccessLayer();
-		 aid = new TucsonAgentId("CloudAgent");
-		 acc = TucsonMetaACC.getContext(aid);
-		 
-		 user = RAL.GetUser(username);
+		 try{
+			 RAL = new RegistryAccessLayer();
+			 aid = new TucsonAgentId("agentOnCloud");
+			 acc = TucsonMetaACC.getContext(aid);
+			 
+			 user = RAL.GetUser(username);
+		 } catch(Exception e) {
+			 System.out.println(e);
+		 }
 	 }
 	 
 	 public TucsonTupleCentreId GetTupleCenter(String tuple_centre_name) {
