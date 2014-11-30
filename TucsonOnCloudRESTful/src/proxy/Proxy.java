@@ -89,9 +89,9 @@ public class Proxy extends HttpServlet {
          *  Writes Tuple in the target tuple space; 
          *  after the operation is successfully executed, Tuple is returned as a completion
          */
-	        case "out":{
+	        case "out": {
 	        	System.out.println("Username:" + (String) session.getAttribute("username"));
-	        	System.out.println("Operation: rdp");
+	        	System.out.println("Operation: out");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
 	        	System.out.println("Template:" + tuple_node.getAttribute("value"));
 	            initNodeAccessLayer(session);
@@ -102,6 +102,7 @@ public class Proxy extends HttpServlet {
 					answer.appendChild(answer.createElement("problem"));
 					return answer;
 				}
+				System.out.println("Realizzo la out");
 				LogicTuple response = NAL.out("default", tuple);
 	            System.out.println("Risposta:" + response.toString());
 	            answer.appendChild(answer.createElement("ok"));
@@ -117,7 +118,7 @@ public class Proxy extends HttpServlet {
 	        case "rd": {
 	        	session.setAttribute("status", "pending");
             	System.out.println("Username:" + (String) session.getAttribute("username"));
-	        	System.out.println("Operation: rdp");
+	        	System.out.println("Operation: rd");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
 	        	System.out.println("Template:" + tuple_node.getAttribute("value"));
 	            initNodeAccessLayer(session);
@@ -187,8 +188,6 @@ public class Proxy extends HttpServlet {
 	        	System.out.println("Operation: in");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
 	        	System.out.println("Template:" + tuple_node.getAttribute("value"));
-	        	// Inizializzo la comunicazione con il Nodo
-	            initNodeAccessLayer(session);
 				LogicTuple template;
 				try {
 					template = LogicTuple.parse(tuple_node.getAttribute("value"));
@@ -201,22 +200,18 @@ public class Proxy extends HttpServlet {
 	            answer.appendChild(answer.createElement("ack"));
 	            
 	            // Le prossime tre righe vanno fatte eseguire da un thread! ;)
-	            
-	            // Richiedo l'operazione
-	            LogicTuple response = NAL.in("default", template);
-	            // 
-	            session.setAttribute("status", "ready");
-	            session.setAttribute("in", response.toString());
-	            
+	            new AsynchAgent(session, template).start();
             	break;
             }
             
             case "in-result": {
+            	System.out.println("richiesta risultato in");
             	if(session.getAttribute("status").equals("ready")){
-            		answer.appendChild(answer.createElement(session.getAttribute("in").toString()));
-            	}
-            	session.removeAttribute("in");
-            	session.setAttribute("status", "ready");
+            		answer.appendChild(answer.createElement("found"));
+            		session.removeAttribute("in");
+            	}else
+            		answer.appendChild(answer.createElement("not-found"));
+            	
             	break;
             }
         /*
@@ -272,7 +267,7 @@ public class Proxy extends HttpServlet {
 			 System.out.println("autenticazione in corso...");
 			 String username = session.getAttribute("username").toString();
 			 System.out.println("autenticato utente");
-			 NAL = new NodeAccessLayer(username);
+			 NAL = new NodeAccessLayer(username, "synchAgent");
 		 } catch (TucsonInvalidAgentIdException e) {
 			System.out.println(e);
 		 }

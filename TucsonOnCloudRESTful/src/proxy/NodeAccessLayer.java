@@ -21,10 +21,10 @@ public class NodeAccessLayer {
 	 private final String NODE_IP = "localhost";
 	 private User user = null;
 	 
-	 public NodeAccessLayer(String username) throws TucsonInvalidAgentIdException {
-		 try{
+	 public NodeAccessLayer(String username, String tucsonAgentName) throws TucsonInvalidAgentIdException {
+		 try {
 			 RAL = new RegistryAccessLayer();
-			 aid = new TucsonAgentId("agentOnCloud");
+			 aid = new TucsonAgentId(tucsonAgentName);
 			 acc = TucsonMetaACC.getContext(aid);
 			 user = RAL.GetUser(username);
 		 } catch(Exception e) {
@@ -32,17 +32,9 @@ public class NodeAccessLayer {
 		 }
 	 }
 	 
-	 public TucsonTupleCentreId GetTupleCenter(String tuple_centre_name) {
-		 try {
-			return new TucsonTupleCentreId(tuple_centre_name, NODE_IP, user.Nport);
-		} catch (TucsonInvalidTupleCentreIdException e) {
-			return null;
-		}
-	 }
-	 
 	 public LogicTuple out(String tuple_centre_name, LogicTuple tuple) {
 		// Ottengo il tuple centre ID 
-		TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
+		TucsonTupleCentreId tid = getTupleCenter(tuple_centre_name);
 	 	ITucsonOperation op;
 		try {
 			// Realizzo l'operazione out
@@ -57,7 +49,7 @@ public class NodeAccessLayer {
 	 
 	 public LogicTuple rdp(String tuple_centre_name, LogicTuple tuple) {
 		// Ottengo il tuple centre ID 
-			TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
+			TucsonTupleCentreId tid = getTupleCenter(tuple_centre_name);
 		 	ITucsonOperation op;
 			try {
 				// Realizzo l'operazione rdp
@@ -72,7 +64,7 @@ public class NodeAccessLayer {
 	 
 	 public LogicTuple inp(String tuple_centre_name, LogicTuple tuple) {
 		// Ottengo il tuple centre ID 
-			TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
+			TucsonTupleCentreId tid = getTupleCenter(tuple_centre_name);
 		 	ITucsonOperation op;
 			try {
 				// Realizzo l'operazione inp
@@ -87,22 +79,22 @@ public class NodeAccessLayer {
 	 
 	 public LogicTuple in(String tuple_centre_name, LogicTuple tuple) {
 			// Ottengo il tuple centre ID 
-				TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
-			 	ITucsonOperation op;
-				try {
-					// Realizzo l'operazione in
-					op = acc.in(tid, tuple, null);
-				} catch (TucsonOperationNotPossibleException | 
-						 UnreachableNodeException | 
-						 OperationTimeOutException e) {
-					return null;
-				}
-				return op.getLogicTupleResult();
+			TucsonTupleCentreId tid = getTupleCenter(tuple_centre_name);
+		 	ITucsonOperation op;
+			try {
+				// Realizzo l'operazione in
+				op = acc.in(tid, tuple, null);
+			} catch (TucsonOperationNotPossibleException | 
+					 UnreachableNodeException | 
+					 OperationTimeOutException e) {
+				return null;
+			}
+			return op.getLogicTupleResult();
 	 }
 	 
 	 public LogicTuple rd(String tuple_centre_name, LogicTuple tuple) {
 			// Ottengo il tuple centre ID 
-				TucsonTupleCentreId tid = GetTupleCenter(tuple_centre_name);
+				TucsonTupleCentreId tid = getTupleCenter(tuple_centre_name);
 			 	ITucsonOperation op;
 				try {
 					// Realizzo l'operazione in
@@ -113,6 +105,14 @@ public class NodeAccessLayer {
 					return null;
 				}
 				return op.getLogicTupleResult();
+	 }
+	 
+	 private TucsonTupleCentreId getTupleCenter(String tuple_centre_name) {
+		 try {
+			return new TucsonTupleCentreId(tuple_centre_name, NODE_IP, user.Nport);
+		} catch (TucsonInvalidTupleCentreIdException e) {
+			return null;
+		}
 	 }
 	 
 }
