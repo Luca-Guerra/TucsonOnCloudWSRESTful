@@ -67,12 +67,16 @@ public class Proxy extends HttpServlet {
 	 	StampDocument(data);
 	 	System.out.println();
         String operation = root.getTagName();
+        
+        // Preparo il documento di risposta
         Document answer = builder.newDocument();
+        Element result = answer.createElement("result"); 
+        Element value = answer.createElement("value");
+        
+        // Stampo il sessionID con cui sto lavorando
     	System.out.println("WS:" + session.getId());
-    	if(operation.equals("log-in")){
-    		System.out.println("WS: eseguo l'operazione richiesta");
-    	}
-    	// Controllo se per questa sessione è possibile richiedere altre operazioni
+    	
+    	// Controllo se (per questa sessione) è possibile richiedere altre operazioni
     	if(!CanOperate(session, operation)) {
     		answer.appendChild(answer.createElement("WS: pending state"));
     		
@@ -87,12 +91,12 @@ public class Proxy extends HttpServlet {
         		String password = root.getElementsByTagName("password").item(0).getTextContent();
         		RAL = new RegistryAccessLayer();
         		if(RAL.AuthUser(username, password) == null){
-        			answer.appendChild(answer.createElement("log-in fails"));
+        			value.setTextContent("log-in fails");
         			break;
         		}
         		session.setAttribute("username", username);
         		System.out.println("WS: Utente: " + username + " loggato correttamente");
-        		answer.appendChild(answer.createElement("logged"));
+        		value.setTextContent("logged");
         		break;
         	}
         /*
@@ -103,19 +107,20 @@ public class Proxy extends HttpServlet {
 	        	System.out.println("WS: Username:" + (String) session.getAttribute("username"));
 	        	System.out.println("WS: Operation out");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
-	        	System.out.println("WS: Template=" + tuple_node.getAttribute("value"));
+	        	System.out.println("WS: Template=" + tuple_node.getTextContent());
 	            InitNodeAccessLayer(session);
 				LogicTuple tuple;
 				try {
-					tuple = LogicTuple.parse(tuple_node.getAttribute("value"));
+					tuple = LogicTuple.parse(tuple_node.getTextContent());
 				} catch (InvalidLogicTupleException e) {
-					answer.appendChild(answer.createElement("problem"));
-					return answer;
+					value.setTextContent("Problem");
+					break;
 				}
+				String tuple_centre = root.getAttribute("tc").toString();
 				System.out.println("WS: Realizzo la out");
-				LogicTuple response = NAL.out("default", tuple);
+				LogicTuple response = NAL.out(tuple_centre, tuple);
 	            System.out.println("WS: Risposta " + response.toString());
-	            answer.appendChild(answer.createElement("ok"));
+	            value.setTextContent(response.toString());
 	            break;
 	        }
         /*
@@ -126,35 +131,40 @@ public class Proxy extends HttpServlet {
 	 	 * Tuple will be finally found in and returned from the target tuple space
          */
 	        case "rd": {
-	        	session.setAttribute("status", "pending");
-            	System.out.println("WS: Username:" + (String) session.getAttribute("username"));
+	        	// Imposto lo stato del WS per questa sessione in sospenso
+            	session.setAttribute("status", "pending");
+            	System.out.println("WS: Username " + (String) session.getAttribute("username"));
 	        	System.out.println("WS: Operation rd");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
-	        	System.out.println("Template:" + tuple_node.getAttribute("value"));
-	            InitNodeAccessLayer(session);
+	        	System.out.println("WS: Template=" + tuple_node.getTextContent());
 				LogicTuple template;
 				try {
-					template = LogicTuple.parse(tuple_node.getAttribute("value"));
+					template = LogicTuple.parse(tuple_node.getTextContent());
 				} catch (InvalidLogicTupleException e) {
 					answer.appendChild(answer.createElement("problem"));
 					return answer;
 				}
-	            LogicTuple response = NAL.rd("default", template);
-	            session.setAttribute("status", "ready");
-	            session.setAttribute("rd", response.toString());
-	            System.out.println("WS: Risposta " + response.toString());
-	            if(response.toString().equals(tuple_node.getAttribute("value")))
-	            	answer.appendChild(answer.createElement("found"));
-	            else
-	            	answer.appendChild(answer.createElement("not-found"));
+				String tuple_centre = root.getAttribute("tc").toString();
+				// Ritorno l'ack di inizio lavoro
+	            answer.appendChild(answer.createElement("ack"));
+	            
+	            // AsychAgent è un thread con il compito di disaccoppiare il flusso di controllo
+	            // in questo modo posso ritornare subito un ack al client
+	            AsynchAgent agent = new AsynchAgent(session);
+	            agent.setOperation("rd", tuple_centre, template);
+	            agent.start();
             	break;
         	}
 	        
 	        case "rd-result": {
-            	if(session.getAttribute("status").equals("ready"))
-            		answer.appendChild(answer.createElement(session.getAttribute("rd").toString()));
-            	session.removeAttribute("rd");
-            	session.setAttribute("status", "ready");
+	        	System.out.println("WS: richiesta risultato in");
+            	if(session.getAttribute("status").equals("ready")){
+            		String res = session.getAttribute("rd").toString();
+            		value.setTextContent(res);
+            		session.removeAttribute("rd");
+            	}else
+            		value.setTextContent("not-found");
+            	
             	break;
             }
          /*
@@ -166,21 +176,22 @@ public class Proxy extends HttpServlet {
 	        	System.out.println("WS: Username " + (String) session.getAttribute("username"));
 	        	System.out.println("WS: Operation rdp");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
-	        	System.out.println("Template:" + tuple_node.getAttribute("value"));
+	        	System.out.println("Template:" + tuple_node.getTextContent());
 	            InitNodeAccessLayer(session);
 				LogicTuple template;
 				try {
-					template = LogicTuple.parse(tuple_node.getAttribute("value"));
+					template = LogicTuple.parse(tuple_node.getTextContent());
 				} catch (InvalidLogicTupleException e) {
-					answer.appendChild(answer.createElement("problem"));
-					return answer;
+					value.setTextContent("Problem");
+					break;
 				}
-	            LogicTuple response = NAL.rdp("default", template);
+				String tuple_centre = root.getAttribute("tc").toString();
+	            LogicTuple response = NAL.rdp(tuple_centre, template);
 	            System.out.println("WS: Risposta " + response.toString());
-	            if(response.toString().equals(tuple_node.getAttribute("value")))
-	            	answer.appendChild(answer.createElement("found"));
+	            if(response.toString().equals(tuple_node.getTextContent()))
+	            	value.setTextContent(response.toString());
 	            else
-	            	answer.appendChild(answer.createElement("not-found"));
+	            	value.setTextContent("not-found");
             	break;
             }
         /*
@@ -202,17 +213,17 @@ public class Proxy extends HttpServlet {
 				try {
 					template = LogicTuple.parse(tuple_node.getAttribute("value"));
 				} catch (InvalidLogicTupleException e) {
-					answer.appendChild(answer.createElement("problem"));
-					return answer;
+					value.setTextContent("Problem");
+					break;
 				}
-				System.out.println("Risposta: I do that! :)");
+				String tuple_centre = root.getAttribute("tc").toString();
 				// Ritorno l'ack di inizio lavoro
-	            answer.appendChild(answer.createElement("ack"));
+				value.setTextContent("ack");
 	            
 	            // AsychAgent è un thread con il compito di disaccoppiare il flusso di controllo
 	            // in questo modo posso ritornare subito un ack al client
 	            AsynchAgent agent = new AsynchAgent(session);
-	            agent.setOperation("in", "default", template);
+	            agent.setOperation("in", tuple_centre, template);
 	            agent.start();
             	break;
             }
@@ -221,10 +232,10 @@ public class Proxy extends HttpServlet {
             	System.out.println("WS: richiesta risultato in");
             	if(session.getAttribute("status").equals("ready")){
             		String res = session.getAttribute("in").toString();
-            		answer.appendChild(answer.createElement("found"));
+            		value.setTextContent(res);
             		session.removeAttribute("in");
             	}else
-            		answer.appendChild(answer.createElement("not-found"));
+            		value.setTextContent("not-found");
             	
             	break;
             }
@@ -238,21 +249,22 @@ public class Proxy extends HttpServlet {
             	System.out.println("WS: Username " + (String) session.getAttribute("username"));
 	        	System.out.println("WS: Operation inp");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
-	        	System.out.println("Template:" + tuple_node.getAttribute("value"));
+	        	System.out.println("Template:" + tuple_node.getTextContent());
 	            InitNodeAccessLayer(session);
 				LogicTuple template;
 				try {
-					template = LogicTuple.parse(tuple_node.getAttribute("value"));
+					template = LogicTuple.parse(tuple_node.getTextContent());
 				} catch (InvalidLogicTupleException e) {
-					answer.appendChild(answer.createElement("problem"));
-					return answer;
+					value.setTextContent("Problem");
+					break;
 				}
-	            LogicTuple response = NAL.rdp("default", template);
+				String tuple_centre = root.getAttribute("tc").toString();
+	            LogicTuple response = NAL.rdp(tuple_centre, template);
 	            System.out.println("WS: Risposta" + response.toString());
 	            if(response.toString().equals(tuple_node.getAttribute("value")))
-	            	answer.appendChild(answer.createElement("found"));
+	            	value.setTextContent(response.toString());
 	            else
-	            	answer.appendChild(answer.createElement("not-found"));
+	            	value.setTextContent("not-found");
             	break;
             }
     	/*
@@ -273,6 +285,8 @@ public class Proxy extends HttpServlet {
                 break;
             }
         }
+        result.appendChild(value);
+		answer.appendChild(result);
         return answer;
     }
 	 
