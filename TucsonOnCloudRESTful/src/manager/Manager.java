@@ -69,7 +69,7 @@ public class Manager extends HttpServlet {
 	            	System.out.println("OP: new-node");
 	                String username = root.getElementsByTagName("username").item(0).getTextContent();
 	                String password = root.getElementsByTagName("password").item(0).getTextContent();
-	                String result = CAL.newNode(username, password);
+	                String result = CAL.newNode(username, password);	
 	                Element node = answer.createElement(result);
 	                answer.appendChild(node);
 	                break;

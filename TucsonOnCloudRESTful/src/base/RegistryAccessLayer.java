@@ -116,19 +116,6 @@ public class RegistryAccessLayer {
 		return false;
 	}
 	
-	public static void main(String[] args){
-		RegistryAccessLayer RAL = new RegistryAccessLayer();
-		List<User> users = RAL.getUsers();
-		if(users == null || users.size() == 0)
-			System.out.println("Nessun account presente");
-		for(User u: users){
-			System.out.println(u.Username);
-		}
-		System.out.println("Account attivi:" + RAL.activeAccounts());
-		
-		System.out.println(RAL.AttachPort("20508")?"Associata porta":"Non associata porta");
-	}
-	
 	// Metodi privati di utilità per la classe
 	
 	private Document GetRegistry(){

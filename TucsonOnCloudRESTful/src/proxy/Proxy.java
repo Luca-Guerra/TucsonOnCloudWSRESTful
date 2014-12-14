@@ -275,7 +275,7 @@ public class Proxy extends HttpServlet {
 					break;
 				}
 				String tuple_centre = root.getAttribute("tc").toString();
-	            LogicTuple response = NAL.rdp(tuple_centre, template);
+	            LogicTuple response = NAL.inp(tuple_centre, template);
 	            System.out.println("WS: Response = " + response.toString());
 	            if(response.toString().equals(tuple_node.getAttribute("value")))
 	            	value.setTextContent(response.toString());

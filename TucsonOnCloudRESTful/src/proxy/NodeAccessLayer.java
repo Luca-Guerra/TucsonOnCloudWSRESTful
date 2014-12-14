@@ -5,7 +5,6 @@ import java.util.List;
 import models.User;
 import base.RegistryAccessLayer;
 import alice.logictuple.LogicTuple;
-import alice.tucson.api.ITucsonOperation;
 import alice.tucson.api.SynchACC;
 import alice.tucson.api.TucsonAgentId;
 import alice.tucson.api.TucsonMetaACC;
