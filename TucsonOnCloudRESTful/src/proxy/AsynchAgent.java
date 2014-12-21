@@ -18,12 +18,12 @@ public class AsynchAgent extends Thread {
 	public AsynchAgent(HttpSession session) {
 		try {
 			 this.session = session;
-			 System.out.println("Agente: autenticazione in corso...");
+			 Print("autenticazione in corso...", session.getId());
 			 String username = session.getAttribute("username").toString();
-			 System.out.println("Agente: autenticato utente");
+			 Print("autenticato utente", session.getId());
 			 NAL = new NodeAccessLayer(username, "asychAgent");
 		 } catch (TucsonInvalidAgentIdException e) {
-			System.out.println(e);
+			Print(e.getMessage(), session.getId());
 		 }
 	}
 	
@@ -37,7 +37,7 @@ public class AsynchAgent extends Thread {
 	@Override
 	public void run() {
 		LogicTuple response;
-		System.out.println("Agente: eseguo l'operazione: " + operation);
+		Print("eseguo l'operazione: " + operation, session.getId());
         // Eseguo l'operazione pre-impostata
 		switch(operation){
 			case "in": { 
@@ -51,7 +51,7 @@ public class AsynchAgent extends Thread {
 				break; 
 				}
 			default : {
-				System.out.println("Agente: non è presente una primitiva valida.");
+				Print("non è presente una primitiva valida.", session.getId());
 				break;
 				}
 		}
@@ -59,12 +59,16 @@ public class AsynchAgent extends Thread {
 	}
 
 	private void setResponse(LogicTuple response) {
-		System.out.println("Agente: risposta:" + response.toString());
+		Print("risposta:" + response.toString(), session.getId());
 		// Salvo il risultato dell'operazione in sessione
         session.setAttribute(operation, response.toString());	
         // Imposto lo stato della sessione a ready, quindi è possibile leggere il risultato
         // NB: deve essere posto dopo il set del risultato per evitare problemi di concorrenza sulla sessione
  		session.setAttribute("status", "ready");
+	}
+	
+	private void Print(String msg, String session_id){
+		System.out.println("Agent(" + session_id + "): " + msg);
 	}
 	
 }

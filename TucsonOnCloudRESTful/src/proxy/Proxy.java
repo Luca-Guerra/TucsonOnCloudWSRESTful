@@ -68,7 +68,21 @@ public class Proxy extends HttpServlet {
 			request.getSession();
 	        response.setContentType("text/html");
 	        OutputStream os = response.getOutputStream();
-	        String answer = "<html><body><h2>PROXY</h2></body></html>";
+	        String answer = "<html>"
+			        		+ "<body>"
+			        		+ "<h2>TuCSoN Proxy</h2>"
+			        		+ "<h3>Primitive gestite:</h3>"
+			        		+ "<ul>"
+			        		+ "<li>out</li>"
+			        		+ "<li>rd</li>"
+			        		+ "<li>rdp</li>"
+			        		+ "<li>in</li>"
+			        		+ "<li>inp</li>"
+			        		+ "<li>get</li>"
+			        		+ "<li>set</li>"
+			        		+ "</ul>"
+			        		+ "</body>"
+			        		+ "</html>";
         	os.write(answer.getBytes());
         	os.close();
 		} catch (IOException e) {
@@ -79,7 +93,7 @@ public class Proxy extends HttpServlet {
     private Document operations(Document data, HttpSession session) throws ParserConfigurationException {  
 		// Il nome del tag radice determina l'operazione da eseguire 
 	 	Element root = data.getDocumentElement();
-	 	System.out.println("WS: Documento ricevuto");
+	 	Print("Documento ricevuto", session.getId());
 	 	StampDocument(data);
 	 	System.out.println();
         String operation = root.getTagName();
@@ -88,9 +102,6 @@ public class Proxy extends HttpServlet {
         Document answer = builder.newDocument();
         Element result = answer.createElement("result"); 
         Element value = answer.createElement("value");
-        
-        // Stampo il sessionID con cui sto lavorando
-    	System.out.println("WS: sessionID = " + session.getId());
     	
     	// Controllo se (per questa sessione) è possibile richiedere altre operazioni
     	if(!CanOperate(session, operation)) {
@@ -111,7 +122,7 @@ public class Proxy extends HttpServlet {
         			break;
         		}
         		session.setAttribute("username", username);
-        		System.out.println("WS: Utente = " + username + " loggato correttamente");
+        		Print("Utente = " + username + " loggato correttamente", session.getId());
         		value.setTextContent("logged");
         		break;
         	}
@@ -120,10 +131,9 @@ public class Proxy extends HttpServlet {
          *  after the operation is successfully executed, Tuple is returned as a completion
          */
 	        case "out": {
-	        	System.out.println("WS: Username = " + (String) session.getAttribute("username"));
-	        	System.out.println("WS: Operation = out");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
-	        	System.out.println("WS: Template = " + tuple_node.getTextContent());
+            	Print("Username = " + (String) session.getAttribute("username") + "; Operation = out; Template = " + tuple_node.getTextContent() , session.getId());
+
 	            InitNodeAccessLayer(session);
 				LogicTuple tuple;
 				try {
@@ -134,7 +144,7 @@ public class Proxy extends HttpServlet {
 				}
 				String tuple_centre = root.getAttribute("tc").toString();
 				LogicTuple response = NAL.out(tuple_centre, tuple);
-	            System.out.println("WS: Risposta " + response.toString());
+				Print("Risposta " + response.toString(), session.getId());
 	            value.setTextContent(response.toString());
 	            break;
 	        }
@@ -149,10 +159,9 @@ public class Proxy extends HttpServlet {
 	        	// Imposto lo stato del WS per questa sessione in sospenso
             	session.setAttribute("status", "pending");
 	        	
-            	System.out.println("WS: Username = " + (String) session.getAttribute("username"));
-	        	System.out.println("WS: Operation = rd");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
-	        	System.out.println("WS: Template = " + tuple_node.getTextContent());
+            	Print("Username = " + (String) session.getAttribute("username") + "; Operation = rd; Template = " + tuple_node.getTextContent() , session.getId());
+
 				LogicTuple tuple;
 				try {
 					tuple = LogicTuple.parse(tuple_node.getTextContent());
@@ -173,7 +182,7 @@ public class Proxy extends HttpServlet {
         	}
 	        
 	        case "rd-result": {
-	        	System.out.println("WS: richiesta risultato in");
+	        	Print("richiesta risultato in", session.getId());
             	if(session.getAttribute("status").equals("ready")){
             		String res = session.getAttribute("rd").toString();
             		value.setTextContent(res);
@@ -189,10 +198,9 @@ public class Proxy extends HttpServlet {
       	  * (operation outcome is FAILURE) and TupleTemplate is returned;
           */
             case "rdp": {
-	        	System.out.println("WS: Username = " + (String) session.getAttribute("username"));
-	        	System.out.println("WS: Operation = rdp");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
-	        	System.out.println("WS: Template = " + tuple_node.getTextContent());
+            	Print("Username = " + (String) session.getAttribute("username") + "; Operation = rdp; Template = " + tuple_node.getTextContent() , session.getId());
+
 	            InitNodeAccessLayer(session);
 				LogicTuple tuple;
 				try {
@@ -203,7 +211,7 @@ public class Proxy extends HttpServlet {
 				}
 				String tuple_centre = root.getAttribute("tc").toString();
 	            LogicTuple response = NAL.rdp(tuple_centre, tuple);
-	            System.out.println("WS: Response = " + response.toString());
+	            Print("Response = " + response.toString(), session.getId());
 	            if(response.toString().equals(tuple_node.getTextContent()))
 	            	value.setTextContent(response.toString());
 	            else
@@ -221,13 +229,13 @@ public class Proxy extends HttpServlet {
             case "in": {
             	// Imposto lo stato del WS per questa sessione in sospenso
             	session.setAttribute("status", "pending");
-            	System.out.println("WS: Username " + (String) session.getAttribute("username"));
-	        	System.out.println("WS: Operation in");
+            	
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
-	        	System.out.println("Template:" + tuple_node.getAttribute("value"));
+            	Print("Username = " + (String) session.getAttribute("username") + "; Operation = in; Template = " + tuple_node.getTextContent() , session.getId());
+
 				LogicTuple template;
 				try {
-					template = LogicTuple.parse(tuple_node.getAttribute("value"));
+					template = LogicTuple.parse(tuple_node.getTextContent());
 				} catch (InvalidLogicTupleException e) {
 					value.setTextContent("Problem");
 					break;
@@ -245,7 +253,7 @@ public class Proxy extends HttpServlet {
             }
             
             case "in-result": {
-            	System.out.println("WS: richiesta risultato in");
+            	Print("richiesta risultato in", session.getId());
             	if(session.getAttribute("status").equals("ready")){
             		String res = session.getAttribute("in").toString();
             		value.setTextContent(res);
@@ -262,10 +270,9 @@ public class Proxy extends HttpServlet {
      	 * TupleTemplate is returned;
          */         
             case "inp": {
-            	System.out.println("WS: Username = " + (String) session.getAttribute("username"));
-	        	System.out.println("WS: Operation = inp");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
-	        	System.out.println("WS: Template = " + tuple_node.getTextContent());
+            	Print("Username = " + (String) session.getAttribute("username") + "; Operation = inp; Template = " + tuple_node.getTextContent() , session.getId());
+
 	            InitNodeAccessLayer(session);
 				LogicTuple template;
 				try {
@@ -276,7 +283,7 @@ public class Proxy extends HttpServlet {
 				}
 				String tuple_centre = root.getAttribute("tc").toString();
 	            LogicTuple response = NAL.inp(tuple_centre, template);
-	            System.out.println("WS: Response = " + response.toString());
+	            Print("Response = " + response.toString(), session.getId());
 	            if(response.toString().equals(tuple_node.getAttribute("value")))
 	            	value.setTextContent(response.toString());
 	            else
@@ -290,19 +297,19 @@ public class Proxy extends HttpServlet {
  	 	 * succeeds anyway
     	 */ 
             case "get":{
-            	System.out.println("WS: Username = " + (String) session.getAttribute("username"));
-	        	System.out.println("WS: Operation = get");
+            	Print("Username = " + (String) session.getAttribute("username"), session.getId());
+	        	Print("Operation = get", session.getId());
 	            InitNodeAccessLayer(session);
 				
 				String tuple_centre = root.getAttribute("tc").toString();
 	            List<LogicTuple> tuples = NAL.get(tuple_centre);
 	            Element x_tuples = answer.createElement("tuples");
-	            for(LogicTuple tuple:tuples){
+	            for(LogicTuple tuple:tuples) {
 	            	Element x_tuple = answer.createElement("tuple");
 	            	x_tuple.setTextContent(tuple.toString());
 	            	x_tuples.appendChild(x_tuple);
 	            }
-	            System.out.println("WS: get done!");
+	            Print("get done!", session.getId());
 	            value.appendChild(x_tuples);
             	break;
             }
@@ -312,10 +319,9 @@ public class Proxy extends HttpServlet {
      	 * Tuples is successfully returned
          */
             case "set":{
-            	System.out.println("WS: Username = " + (String) session.getAttribute("username"));
-	        	System.out.println("WS: Operation = set");
 	        	Element tuple_node = (Element)root.getElementsByTagName("tuple").item(0);
-	        	System.out.println("WS: Template = " + tuple_node.getTextContent());
+            	Print("Username = " + (String) session.getAttribute("username") + "; Operation = set; Template = " + tuple_node.getTextContent() , session.getId());
+
 	            InitNodeAccessLayer(session);
 				LogicTuple template;
 				try {
@@ -332,7 +338,7 @@ public class Proxy extends HttpServlet {
 	            	x_tuple.setTextContent(tuple.toString());
 	            	x_tuples.appendChild(x_tuple);
 	            }
-	            System.out.println("WS: set done!");
+	            Print("set done!", session.getId());
 	            value.appendChild(x_tuples);
             	break;
             }
@@ -344,9 +350,9 @@ public class Proxy extends HttpServlet {
 	 
 	private void InitNodeAccessLayer(HttpSession session) {
 		 try {
-			 System.out.println("WS: autenticazione in corso...");
+			 Print("autenticazione in corso...", session.getId());
 			 String username = session.getAttribute("username").toString();
-			 System.out.println("WS: autenticato utente");
+			 Print("autenticato utente", session.getId());
 			 NAL = new NodeAccessLayer(username, "synchAgent");
 		 } catch (TucsonInvalidAgentIdException e) {
 			System.out.println(e);
@@ -379,5 +385,9 @@ public class Proxy extends HttpServlet {
 			return true;
 		
 		return false;
+	}
+	
+	private void Print(String msg, String session_id){
+		System.out.println(session_id + ": " + msg);
 	}
 }
