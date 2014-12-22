@@ -167,12 +167,12 @@ public class Proxy extends HttpServlet {
 				try {
 					tuple = LogicTuple.parse(tuple_node.getTextContent());
 				} catch (InvalidLogicTupleException e) {
-					answer.appendChild(answer.createElement("problem"));
+					value.setTextContent("Problem");
 					return answer;
 				}
 				String tuple_centre = root.getAttribute("tc").toString();
 				// Ritorno l'ack di inizio lavoro
-	            answer.appendChild(answer.createElement("ack"));
+				value.setTextContent("ack");
 	            
 	            // AsychAgent è un thread con il compito di disaccoppiare il flusso di controllo
 	            // in questo modo posso ritornare subito un ack al client

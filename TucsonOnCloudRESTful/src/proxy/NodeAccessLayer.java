@@ -1,8 +1,6 @@
 package proxy;
 
 import java.util.List;
-import java.util.Random;
-import java.util.UUID;
 
 import models.User;
 import base.RegistryAccessLayer;
@@ -20,28 +18,45 @@ import alice.tuplecentre.api.exceptions.OperationTimeOutException;
 // Tramite questa classe rendiamo trasparente 
 // l'accesso al nodo associato al registro.
 public class NodeAccessLayer {
-	 private TucsonAgentId aid = null;
-	 private SynchACC acc = null;
-	 private RegistryAccessLayer RAL = null;
-	 private final String NODE_IP = "localhost";
-	 private User user = null;
+	
+	// La classe deve rimanere statica, in questo modo avremo sempre e solo un unica istanza 
+	// dell'ACC, in caso contrario più istanze di acc con stesso aid manderebbero in stallo
+	// il nodo.
+	static public class WsACC
+	{
+		static private TucsonAgentId aid = null;
+		static private SynchACC acc = null;
+		static SynchACC GetACC(){
+			if(acc == null)
+			{
+				try {
+					aid = new TucsonAgentId("wsAgent");
+				} catch (TucsonInvalidAgentIdException e) {
+					e.printStackTrace();
+				}
+			    acc = TucsonMetaACC.getContext(aid);
+			}
+			return acc;
+		}
+	}
+	
+	private RegistryAccessLayer RAL = null;
+	private final String NODE_IP = "localhost";
+	private User user = null;
 	 
-	 public NodeAccessLayer(String username) throws TucsonInvalidAgentIdException {
-		 try {
-			 RAL = new RegistryAccessLayer();
-			 UUID uuid = UUID.randomUUID();
-			 aid = new TucsonAgentId("agent" + uuid);
-			 acc = TucsonMetaACC.getContext(aid);
-			 user = RAL.GetUser(username);
-		 } catch(Exception e) {
-			 System.out.println(e);
-		 }
-	 }
+	public NodeAccessLayer(String username) throws TucsonInvalidAgentIdException {
+		try {
+			RAL = new RegistryAccessLayer();
+			user = RAL.GetUser(username);
+		} catch(Exception e) {
+			System.out.println(e);
+		}
+	}
 	 
 	 public List<LogicTuple> get(String tuple_centre_name){
 		 TucsonTupleCentreId tid = getTupleCenter(tuple_centre_name);
 		 try {
-			return acc.get(tid, null).getLogicTupleListResult();
+			return WsACC.GetACC().get(tid, null).getLogicTupleListResult();
 		} catch (TucsonOperationNotPossibleException | UnreachableNodeException
 				| OperationTimeOutException e) {
 			return null;
@@ -51,7 +66,7 @@ public class NodeAccessLayer {
 	 public List<LogicTuple> set(String tuple_centre_name, LogicTuple tuple){
 		 TucsonTupleCentreId tid = getTupleCenter(tuple_centre_name);
 		 try {
-			return acc.set(tid, tuple, null).getLogicTupleListResult();
+			return WsACC.GetACC().set(tid, tuple, null).getLogicTupleListResult();
 		} catch (TucsonOperationNotPossibleException | UnreachableNodeException
 				| OperationTimeOutException e) {
 			return null;
@@ -91,11 +106,11 @@ public class NodeAccessLayer {
 		TucsonTupleCentreId tid = getTupleCenter(tuple_centre_name);
 	 	try {
 			switch(op) {
-				case "out": { return acc.out(tid, tuple, null).getLogicTupleResult(); }
-				case "in":  { return acc.in(tid, tuple, null).getLogicTupleResult();  }
-				case "inp": { return acc.inp(tid, tuple, null).getLogicTupleResult(); }
-				case "rd":  { return acc.rd(tid, tuple, null).getLogicTupleResult();  }
-				case "rdp": { return acc.rdp(tid, tuple, null).getLogicTupleResult(); }
+				case "out": { return WsACC.GetACC().out(tid, tuple, null).getLogicTupleResult(); }
+				case "in":  { return WsACC.GetACC().in(tid, tuple, null).getLogicTupleResult();  }
+				case "inp": { return WsACC.GetACC().inp(tid, tuple, null).getLogicTupleResult(); }
+				case "rd":  { return WsACC.GetACC().rd(tid, tuple, null).getLogicTupleResult();  }
+				case "rdp": { return WsACC.GetACC().rdp(tid, tuple, null).getLogicTupleResult(); }
 				default:	{ return null; }
 			}
 		} catch (TucsonOperationNotPossibleException | 
