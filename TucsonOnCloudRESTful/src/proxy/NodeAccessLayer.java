@@ -1,6 +1,8 @@
 package proxy;
 
 import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 import models.User;
 import base.RegistryAccessLayer;
@@ -24,10 +26,11 @@ public class NodeAccessLayer {
 	 private final String NODE_IP = "localhost";
 	 private User user = null;
 	 
-	 public NodeAccessLayer(String username, String tucsonAgentName) throws TucsonInvalidAgentIdException {
+	 public NodeAccessLayer(String username) throws TucsonInvalidAgentIdException {
 		 try {
 			 RAL = new RegistryAccessLayer();
-			 aid = new TucsonAgentId(tucsonAgentName);
+			 UUID uuid = UUID.randomUUID();
+			 aid = new TucsonAgentId("agent" + uuid);
 			 acc = TucsonMetaACC.getContext(aid);
 			 user = RAL.GetUser(username);
 		 } catch(Exception e) {

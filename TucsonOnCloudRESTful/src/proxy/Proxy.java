@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Random;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -112,7 +113,7 @@ public class Proxy extends HttpServlet {
     	}
     	
         switch (operation) {
-        
+        	
         	case "log-in":{
         		String username = root.getElementsByTagName("username").item(0).getTextContent();
         		String password = root.getElementsByTagName("password").item(0).getTextContent();
@@ -253,14 +254,15 @@ public class Proxy extends HttpServlet {
             }
             
             case "in-result": {
-            	Print("richiesta risultato in", session.getId());
             	if(session.getAttribute("status").equals("ready")){
             		String res = session.getAttribute("in").toString();
             		value.setTextContent(res);
             		session.removeAttribute("in");
-            	}else
+            		Print("Template trovato! :)", session.getId());
+            	}else{
             		value.setTextContent("not-found");
-            	
+            		Print("Template non ancora trovato.", session.getId());
+            	}
             	break;
             }
         /*
@@ -353,9 +355,10 @@ public class Proxy extends HttpServlet {
 			 Print("autenticazione in corso...", session.getId());
 			 String username = session.getAttribute("username").toString();
 			 Print("autenticato utente", session.getId());
-			 NAL = new NodeAccessLayer(username, "synchAgent");
+			 // Il nuovo agente tucson ha un nome univoco per sessione
+			 NAL = new NodeAccessLayer(username);
 		 } catch (TucsonInvalidAgentIdException e) {
-			System.out.println(e);
+			Print(e.getMessage(), session.getId());
 		 }
 	 }
 	

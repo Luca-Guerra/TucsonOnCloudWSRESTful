@@ -1,5 +1,7 @@
 package proxy;
 
+import java.util.Random;
+
 import javax.servlet.http.HttpSession;
 
 import alice.logictuple.LogicTuple;
@@ -21,7 +23,7 @@ public class AsynchAgent extends Thread {
 			 Print("autenticazione in corso...", session.getId());
 			 String username = session.getAttribute("username").toString();
 			 Print("autenticato utente", session.getId());
-			 NAL = new NodeAccessLayer(username, "asychAgent");
+			 NAL = new NodeAccessLayer(username);
 		 } catch (TucsonInvalidAgentIdException e) {
 			Print(e.getMessage(), session.getId());
 		 }
