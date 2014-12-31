@@ -1,6 +1,5 @@
 package proxy;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -12,7 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -22,7 +20,6 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
 
 import base.RegistryAccessLayer;
 import alice.logictuple.LogicTuple;
@@ -47,14 +44,14 @@ public class Proxy extends HttpServlet {
 		}
     }
 
-	protected synchronized void doPost(HttpServletRequest request, HttpServletResponse response) {
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) {
 		try {
 			InputStream is = request.getInputStream();
 			HttpSession session = request.getSession();
 	        response.setContentType("text/xml;charset=UTF-8");
 	        OutputStream os = response.getOutputStream();
-	        Document data = builder.parse(is);
-	        is.close();
+	        // Faccio il parsing dell'inputstream
+	        Document data = getDocumentFromStream(is);
         	Document answer = operations(data, session);
         	Transformer transformer = TransformerFactory.newInstance().newTransformer();
         	transformer.transform(new DOMSource(answer), new StreamResult(os));
@@ -63,6 +60,20 @@ public class Proxy extends HttpServlet {
 			System.out.println("Problemi metodo doPost");
 			System.out.println(e);
 		}
+	}
+	
+	// Il parsing del inputStream deve essere sequenziale
+	private synchronized Document getDocumentFromStream(InputStream is){
+		Document data = builder.newDocument();
+		try {
+			data = builder.parse(is);
+	        is.close();
+		} catch (Exception e) {
+			System.out.println("Problemi metodo getDocuemntFromStream");
+			e.printStackTrace();
+		}
+		
+        return data;
 	}
 	
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) {
