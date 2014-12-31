@@ -118,7 +118,7 @@ public class RegistryAccessLayer {
 	
 	// Metodi privati di utilità per la classe
 	
-	private Document GetRegistry(){
+	private synchronized Document GetRegistry(){
 		// Ricavo il file XML del registro
 		File file = new File(registryPath);
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -130,14 +130,14 @@ public class RegistryAccessLayer {
 			return null;
 		}
 		try {
-			// Parserizzo il file XML in un Document
 			return db.parse(file);
 		} catch (SAXException | IOException e) {
+			System.out.println("Eccezzione nel parsing del documento");
 			/*
 			 *  Se mal formattato ritorno un documento nuovo 
 			 *  (questo approccio è problematico nel caso in cui siano già presenti dei nodi TuCSoN attivi)
 			 */
-			return db.newDocument();
+			return null;
 		}
 	}
 }
